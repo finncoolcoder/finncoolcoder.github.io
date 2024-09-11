@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="text/javascript">
+// <![CDATA[
+var bits=80; // how many bits
+var speed=33; // how fast - smaller is faster
+var bangs=25; // how many can be launched simultaneously (note that using too many can slow the script down)
+var colours=new Array("#03f", "#f03", "#0e0", "#93f", "#0cf", "#f93", "#f0c"); 
+//                     blue    red     green   purple  cyan    orange  pink
+
+/****************************
+*      Fireworks Effect     *
+*(c)2004-14 mf2fm web-design*
+*  http://www.mf2fm.com/rv  *
+* DON'T EDIT BELOW THIS BOX *
+****************************/
+var bangheight=new Array();
+var intensity=new Array();
+var colour=new Array();
+var Xpos=new Array();
+var Ypos=new Array();
+var dX=new Array();
+var dY=new Array();
+var stars=new Array();
+var decay=new Array();
+var swide=800;
+var shigh=600;
+var boddie;
+
+if (typeof('addRVLoadEvent')!='function') function addRVLoadEvent(funky) {
+  var oldonload=window.onload;
+  if (typeof(oldonload)!='function') window.onload=funky;
+  else window.onload=function() {
+    if (oldonload) oldonload();
+    funky();
+  }
+}
+
+addRVLoadEvent(light_blue_touchpaper);
+
+function light_blue_touchpaper() { if (document.getElementById) {
+  var i;
+  boddie=document.createElement("div");
+  boddie.style.position="fixed";
+  boddie.style.top="0px";
+  boddie.style.left="0px";
+  boddie.style.overflow="visible";
+  boddie.style.width="1px";
+  boddie.style.height="1px";
+  boddie.style.backgroundColor="transparent";
+  document.body.appendChild(boddie);
+  set_width();
+  for (i=0; i<bangs; i++) {
+    write_fire(i);
+    launch(i);
+    setInterval('stepthrough('+i+')', speed);
+  }
+}}
+
+function write_fire(N) {
+  var i, rlef, rdow;
+  stars[N+'r']=createDiv('|', 12);
+  boddie.appendChild(stars[N+'r']);
+  for (i=bits*N; i<bits+bits*N; i++) {
+    stars[i]=createDiv('*', 13);
+    boddie.appendChild(stars[i]);
+  }
+}
+
+function createDiv(char, size) {
+  var div=document.createElement("div");
+  div.style.font=size+"px monospace";
+  div.style.position="absolute";
+  div.style.backgroundColor="transparent";
+  div.appendChild(document.createTextNode(char));
+  return (div);
+}
+
+function launch(N) {
+  colour[N]=Math.floor(Math.random()*colours.length);
+  Xpos[N+"r"]=swide*0.5;
+  Ypos[N+"r"]=shigh-5;
+  bangheight[N]=Math.round((0.5+Math.random())*shigh*0.4);
+  dX[N+"r"]=(Math.random()-0.5)*swide/bangheight[N];
+  if (dX[N+"r"]>1.25) stars[N+"r"].firstChild.nodeValue="/";
+  else if (dX[N+"r"]<-1.25) stars[N+"r"].firstChild.nodeValue="\\";
+  else stars[N+"r"].firstChild.nodeValue="|";
+  stars[N+"r"].style.color=colours[colour[N]];
+}
+
+function bang(N) {
+  var i, Z, A=0;
+  for (i=bits*N; i<bits+bits*N; i++) { 
+    Z=stars[i].style;
+    Z.left=Xpos[i]+"px";
+    Z.top=Ypos[i]+"px";
+    if (decay[i]) decay[i]--;
+    else A++;
+    if (decay[i]==15) Z.fontSize="7px";
+    else if (decay[i]==7) Z.fontSize="2px";
+    else if (decay[i]==1) Z.visibility="hidden";
+	if (decay[i]>1 && Math.random()<.1) {
+	   Z.visibility="hidden";
+	   setTimeout('stars['+i+'].style.visibility="visible"', speed-1);
+	}
+    Xpos[i]+=dX[i];
+    Ypos[i]+=(dY[i]+=1.25/intensity[N]);
+
+  }
+  if (A!=bits) setTimeout("bang("+N+")", speed);
+}
+
+function stepthrough(N) { 
+  var i, M, Z;
+  var oldx=Xpos[N+"r"];
+  var oldy=Ypos[N+"r"];
+  Xpos[N+"r"]+=dX[N+"r"];
+  Ypos[N+"r"]-=4;
+  if (Ypos[N+"r"]<bangheight[N]) {
+    M=Math.floor(Math.random()*3*colours.length);
+    intensity[N]=5+Math.random()*4;
+    for (i=N*bits; i<bits+bits*N; i++) {
+      Xpos[i]=Xpos[N+"r"];
+      Ypos[i]=Ypos[N+"r"];
+      dY[i]=(Math.random()-0.5)*intensity[N];
+      dX[i]=(Math.random()-0.5)*(intensity[N]-Math.abs(dY[i]))*1.25;
+      decay[i]=16+Math.floor(Math.random()*16);
+      Z=stars[i];
+      if (M<colours.length) Z.style.color=colours[i%2?colour[N]:M];
+      else if (M<2*colours.length) Z.style.color=colours[colour[N]];
+      else Z.style.color=colours[i%colours.length];
+      Z.style.fontSize="13px";
+      Z.style.visibility="visible";
+    }
+    bang(N);
+    launch(N);
+  }
+  stars[N+"r"].style.left=oldx+"px";
+  stars[N+"r"].style.top=oldy+"px";
+} 
+
+window.onresize=set_width;
+function set_width() {
+  var sw_min=999999;
+  var sh_min=999999;
+  if (document.documentElement && document.documentElement.clientWidth) {
+    if (document.documentElement.clientWidth>0) sw_min=document.documentElement.clientWidth;
+    if (document.documentElement.clientHeight>0) sh_min=document.documentElement.clientHeight;
+  }
+  if (typeof(self.innerWidth)!="undefined" && self.innerWidth) {
+    if (self.innerWidth>0 && self.innerWidth<sw_min) sw_min=self.innerWidth;
+    if (self.innerHeight>0 && self.innerHeight<sh_min) sh_min=self.innerHeight;
+  }
+  if (document.body.clientWidth) {
+    if (document.body.clientWidth>0 && document.body.clientWidth<sw_min) sw_min=document.body.clientWidth;
+    if (document.body.clientHeight>0 && document.body.clientHeight<sh_min) sh_min=document.body.clientHeight;
+  }
+  if (sw_min==999999 || sh_min==999999) {
+    sw_min=800;
+    sh_min=600;
+  }
+  swide=sw_min;
+  shigh=sh_min;
+}
+// ]]>
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZORP</title>
+    <!-- The style.css file allows you to change the look of your web pages.
+         If you include the next line in all your web pages, they will all share the same look.
+         This makes it easier to make new pages for your site. -->
+    <link href="/style.css" rel="stylesheet" type="text/css" media="all">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico"> 
+  </head>
+  <body>
+    
+        <div id="container"><div id="topBar"><marquee><p><strong>if you are reading this go outside and dig a hole. THIS IS FINNS WEBSITE AND IT IS REALLY COOL-GOOD OLDFASHIONED PERSONAL WEB-THE NEOCITIES EFFECT-WHO NEEDS A CUSTOM DOMAIN</strong></p><img src="https://www.internetbumperstickers.com/066811/c01/choose1thng_evrythng.gif" alt="desc"><img src="https://www.internetbumperstickers.com/066811/i01/imperfctns_adorable.gif
+" alt="desc"><img src="https://www.internetbumperstickers.com/066811/a01/automatic_doors.gif" alt="desc"><img src="https://www.internetbumperstickers.com/066811/i01/imperfctns_adorable.gif
+" alt="desc"><img src="https://www.internetbumperstickers.com/066811/w01/weird_limited.gif
+" alt="desc"><img src="https://www.internetbumperstickers.com/066811/f01/filthy_stinking.gif" alt="desc"><img src="https://www.internetbumperstickers.com/066811/i01/i_hope_i_invent.gif
+" alt="desc"><img src="https://www.internetbumperstickers.com/066811/f01/fairy_godmother.gif" alt="desc"><img src="https://www.internetbumperstickers.com/066811/e01/eye_rolling.gif
+" alt="desc"><img src="https://www.internetbumperstickers.com/066811/d01/drunk_with_powertools.png
+" alt="desc"><img src="https://www.internetbumperstickers.com/066811/t01/theiyrre.png" alt="desc"><img src="https://www.internetbumperstickers.com/066811/0-9b/2b_photogenic.png
+" alt="desc"><img src="https://www.internetbumperstickers.com/066811/b01/balance_diet.gif" alt="desc"><img src="https://www.internetbumperstickers.com/066811/c01/calories_closet.gif" alt="desc"><img src="https://www.internetbumperstickers.com/066811/n01/never_with_stupid.gif" alt="desc"></marquee></div>
+            <div id="headerArea">
+                <div id="header" style="margin-bottom: 10px; height: 418px;"></div>
+                
+            </div>
+      <link rel="icon" type="image/x-icon" href="Foldername/favicon.ico">
+            <div id="flex">
+                <aside id="leftSidebar" style="margin-right: 10px;">
+                    <h2>Notes</h2>
+                    <div class="box">
+                        <a href="https://medium.com/@itshimsingh/how-i-taught-my-grandma-build-websites-step-by-step-e3f1537c1550"
+                        <p><img src="https://mani.neocities.org/images/buttons/7.gif" alt="">
+                        </a>
+<a href="https://www.example.com">
+    <iframe src="//incr.easrng.net/badge?key=zorp" style="background: url(//incr.easrng.net/bg.gif)" title="increment badge" width="88" height="31" frameborder="0"></iframe>
+</a>
+<br>
+<br>
+<a href="https://www.nintendo.co.jp/n02/shvc/p_akfj/index.html">
+    <img src="https://christinee.neocties.org/main/kirby.gif" alt="">
+</a>
+<br>
+<a href="https://medium.com/@itshimsingh/how-i-taught-my-grandma-build-websites-step-by-step-e3f1537c1550">
+    <img src="https://mani.neocities.org/images/buttons/2.gif" alt="">
+</a>
+<br>
+<br>
+<a href="https://entabe.com/34438/ministop-sotokutoku-korean-snack">
+    <img src="https://64.media.tumblr.com/235679e6e06ecdbc92dc34f479483f22/2184ab73e2ead699-d1/s250x400/9291937d4fd29f1863af655d4779ba5ec9429a2d.png" alt="">
+</a>
+<br>
+<a href="https://retrogamer.neocities.org/">
+    <img src="https://64.media.tumblr.com/1aff7ceea135007f31cd9df0f3c3e26f/088f396bf8462393-a1/s500x750/7397bd38ea423a882d5dc3d31fb527451656667b.gifv" alt="">
+</a>
+<br>
+<a href="https://www.nasa.gov">
+    <img src="https://64.media.tumblr.com/a22fa9a1305abae30172d0e57d183931/tumblr_pnim4zKaF41vpf6ddo1_250.gifv" alt="">
+</a>
+<br>
+<a href="https://usserviceanimals.org/blog/miniature-horses-as-service-animals/">
+    <img src="https://syntheticfruits.neocities.org/gifs/PA.gif" alt="">
+</a>
+<br>
+<a href="https://parksandrecreation.fandom.com/wiki/Zorp_the_Surveyor">
+    <img src="https://text.glitter-graphics.net/mushrooms/z.gif" alt="">
+    <img src="https://text.glitter-graphics.net/mushrooms/o.gif" alt="">
+    <img src="https://text.glitter-graphics.net/mushrooms/r.gif" alt="">
+    <img src="https://text.glitter-graphics.net/mushrooms/p.gif" alt="">
+    <img src="https://dl3.glitter-graphics.net/empty.gif" alt="">
+</a>
+<br>
+<a href="https://yesterweb.org/no-to-web3/">
+    <img src="https://auzziejay.com/images/noweb32.gif" alt="">
+</a>
+<br>
+<a href="https://yesterweb.org/no-to-web3/">
+    <img src="https://yesterweb.org/no-to-web3/img/roly-saynotoweb3.gif" alt="">
+</a>
+<br>
+<a href="https://www.example.com">
+    <img src="https://graphic.neocities.org/rainbow_wiggle_cursor_by_kicked_in_teeth-dbamros.gif" alt="">
+</a>
+<br>
+<a href="https://yesterweb.org/zine/issue-05/01/">
+    <img src="https://graphic.neocities.org/419028y8g87sfkf9.gif" alt="">
+</a>
+<br>
+<a href="https://graphic.neocities.org/button_2.gif">
+    <img src="https://graphic.neocities.org/button_2.gif" alt="">
+</a>
+<br>
+<a href="https://eaglercraft.com/">
+    <img src="https://graphic.neocities.org/button_8.gif" alt="">
+</a>
+<br>
+<a href="https://www.google.com/search?q=eyes+for+sale">
+    <img src="https://graphic.neocities.org/button_14.gif" alt="">
+</a>
+<br>
+<a href="https://morningstar-shop.fourthwall.com/products/when-all-else-fails-manipulate-the-data">
+    <img src="https://graphic.neocities.org/tumblr_ozqv8krp281wvu485o8_250.gif" alt="">
+</a>
+<br>
+<a href="https://www.coca-cola.com/us/en">
+    <img src="https://graphic.neocities.org/tumblr_or1j07dpAY1umof4oo1_250.gif" alt="">
+</a>
+<br>
+<a href="https://zelda.nintendo.com/">
+    <img src="https://graphic.neocities.org/link.png" alt="">
+</a>
+<br>
+<a href="https://www.mariowiki.com/Chain_Chomp">
+    <img src="https://graphic.neocities.org/6c18159d-1bf7-4177-a982-0ae95062cff1.gif" alt="">
+</a>
+<br>
+<a href="https://www.romhacking.net/hacks/5501/">
+    <img src="https://graphic.neocities.org/tumblr_inline_p73xpuZBfW1rsi4si_500.gif" alt="">
+</a>
+<br>
+<a href="https://morningstar-shop.fourthwall.com/products/when-all-else-fails-manipulate-the-data">
+    <img src="https://graphic.neocities.org/Tiergem_89.gif" alt="">
+</a>
+<br>
+<a href="https://www.example.com">
+    <img src="https://artwork.neocities.org/toybox/pixelins.gif" alt="">
+</a>
+<br>
+<a href="https://donate.wikimedia.org/w/index.php?title=Special:LandingPage&country=US&uselang=en&wmf_medium=spontaneous&wmf_source=fr-redir&wmf_campaign=spontaneous">
+    <img src="https://jodieblend.neocities.org/button/silly/wikipedia.gif" alt="">
+</a>
+<br>
+<a href="https://donate.wikimedia.org/w/index.php?title=Special:LandingPage&country=US&uselang=en&wmf_medium=spontaneous&wmf_source=fr-redir&wmf_campaign=spontaneous">
+    <img src="https://jodieblend.neocities.org/button/silly/wikipedia.gif" alt="HTML tutorial" style="width:42px;height:42px;">
+</a>
+
+
+</p>
+                        <ul style="padding-left:10px;">
+                            <li>I am an absilute god</li>
+                        </ul>
+                    </div>
+                    <h2>vassup</h2>
+                    <h3> sadgrl tools (might be broken)</h3>
+                    <ul>
+                        <li><a href="https://sadgrlonline.github.io/html-cheatsheet/" target="_blank">HTML Cheatsheet</a>
+                        </li><li><a href="/sadgrl/webmastery/webmaster-links.html" target="_blank">Webmaster Links</a></li>
+                        <li><a href="/sadgrl/webmastery/downloads/tiledbgs.html" target="_blank">Tiled BGs</a></li>
+                        <li><a href="/sadgrl/webmastery/downloads/fonts.html" target="_blank">Fonts</a></li>
+                        <li><a href="/sadgrl/projects/ideas/" target="_blank">Site Ideas</a></li>
+                    </ul>
+                    <iframe src="https://www3.cbox.ws/box/?boxid=3540448&boxtag=fCZrm2" width="100%" height="450" allowtransparency="yes" allow="autoplay" frameborder="0" marginheight="0" marginwidth="0" scrolling="auto"></iframe>	
+                </aside>
+                <main>
+                    <h1>finns little web hangout!</h1>
+                    
+                    
+                    <a href="/portfolio/portfolio.html">SCHOOL PORTFOLIO</a>
+
+                    
+                    
+                    <details>
+                      <summary><strong>Why the name Zorp?!</strong></summary>
+                      <p>I called this site Zorp because it sounds cool... Also because it was one of the few remaining short(ish) usernames on Neocities.</p>
+                      <p>After further research (googling Zorp), I found out that there is a character named Zorp the Surveyor.</p>
+                      <p>Apparently, people in Indiana worshiped this thing in the 1950s. IDK. It was supposed to be the end of the world.</p>
+                      <img src="/zorp.png" alt="Zorp the Surveyor">
+                    </details>
+
+                    
+                    <details>
+                    <summary><strong>About me + this site etc</strong></summary>
+                    <p>lalalalalala</p>
+                    <img src="/86st.gif" alt="">
+                    
+                    
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p><strong>Other things on this site</strong></p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p><strong>External links resources etc</strong></p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    <p>lalalalalala</p>
+                    
+
+
+                </main>
+                <aside id="rightSidebar" style="margin-left: 10px;">
+                    <h2>Buttons (I will buttonate these sometime)</h2>
+                    
+                    <div class="box">
+                        <center>
+<a href="https://www.hamqsl.com/solar.html" title="Click to add Solar-Terrestrial Data to your website!"><img src="https://www.hamqsl.com/solarsystem.php"></a>
+</center>
+                        <p>By the way this site is always under construction!</p>
+                        <center>
+<a href="https://www.hamqsl.com/solar.html" title="Click to add Solar-Terrestrial Data to your website!"><img src="https://www.hamqsl.com/solarglobe.php"></a>
+</center>
+                        <p>Email me if it is broken: kd2wtr(at)proton(dot)me
+                        <ul style="padding-left:10px;">
+                            <img src="https://anlucas.neocities.org/anybrow.gif" alt="Image 1"><br>
+<img src="https://anlucas.neocities.org/button.gif" alt="Image 2"><br>
+<img src="https://anlucas.neocities.org/1dlb.gif" alt="Image 3"><br>
+<img src="https://anlucas.neocities.org/Ebay.gif" alt="Image 4"><br>
+<img src="https://anlucas.neocities.org/email.gif" alt="Image 5"><br>
+<img src="https://anlucas.neocities.org/free_webspace_hot_reviews.gif" alt="Image 6"><br>
+<img src="https://anlucas.neocities.org/FreewareGuide.gif" alt="Image 7"><br>
+<img src="https://anlucas.neocities.org/geo-citi.gif" alt="Image 8"><br>
+<img src="https://anlucas.neocities.org/hatemac.jpg" alt="Image 9"><br>
+<img src="https://anlucas.neocities.org/hatems.jpg" alt="Image 10"><br>
+<img src="https://anlucas.neocities.org/html.gif" alt="Image 11"><br>
+<img src="https://anlucas.neocities.org/hicolor.gif" alt="Image 12"><br>
+<img src="https://anlucas.neocities.org/ieisevil.gif" alt="Image 13"><br>
+<img src="https://anlucas.neocities.org/linux_now.gif" alt="Image 14"><br>
+<img src="https://anlucas.neocities.org/made_with_windows.gif" alt="Image 15"><br>
+<img src="https://anlucas.neocities.org/notepad-logo3.gif" alt="Image 16"><br>
+<img src="https://anlucas.neocities.org/penguin.gif" alt="Image 17"><br>
+<img src="https://anlucas.neocities.org/spdy-now.gif" alt="Image 18"><br>
+<img src="https://anlucas.neocities.org/win98_89.gif" alt="Image 19"><br>
+<img src="https://anlucas.neocities.org/toolzonenow.gif" alt="Image 20"><br>
+<img src="https://anlucas.neocities.org/ss89a.gif" alt="Image 21"><br>
+<img src="https://anlucas.neocities.org/nvidia.gif" alt="Image 22"><br>
+<img src="https://anlucas.neocities.org/icon6.gif" alt="Image 23"><br>
+<img src="https://anlucas.neocities.org/mms_but1.gif" alt="Image 24"><br>
+
+                        </ul>
+                    </div>
+                    <h2>Hi there!</h2>
+                    <h3>Other Tools</h3>
+                    <ul>
+                        <li><a href="https://sadgrlonline.github.io/html-cheatsheet/" target="_blank">HTML Cheatsheet</a>
+                        </li><li><a href="/sadgrl/webmastery/webmaster-links.html" target="_blank">Webmaster Links</a></li>
+                        <li><a href="/sadgrl/webmastery/downloads/tiledbgs.html" target="_blank">Tiled BGs</a></li>
+                        <li><a href="/sadgrl/webmastery/downloads/fonts.html" target="_blank">Fonts</a></li>
+                        <li><a href="/sadgrl/projects/ideas/" target="_blank">Site Ideas</a></li>
+
+                    </ul>
+                </aside>
+            </div>
+            <footer id="footer" style="margin-top: 10px;"><marquee>
+  <img src="https://anlucas.neocities.org/anybrow.gif" alt="Image 1">
+  <img src="https://anlucas.neocities.org/button.gif" alt="Image 2">
+  <img src="https://anlucas.neocities.org/1dlb.gif" alt="Image 3">
+  <img src="https://anlucas.neocities.org/Ebay.gif" alt="Image 4">
+  <img src="https://anlucas.neocities.org/email.gif" alt="Image 5">
+  <img src="https://anlucas.neocities.org/free_webspace_hot_reviews.gif" alt="Image 6">
+  <img src="https://anlucas.neocities.org/FreewareGuide.gif" alt="Image 7">
+  <img src="https://anlucas.neocities.org/geo-citi.gif" alt="Image 8">
+  <img src="https://anlucas.neocities.org/hatemac.jpg" alt="Image 9">
+  <img src="https://anlucas.neocities.org/hatems.jpg" alt="Image 10">
+  <img src="https://anlucas.neocities.org/html.gif" alt="Image 11">
+  <img src="https://anlucas.neocities.org/hicolor.gif" alt="Image 12">
+  <img src="https://anlucas.neocities.org/ieisevil.gif" alt="Image 13">
+  <img src="https://anlucas.neocities.org/linux_now.gif" alt="Image 14">
+  <img src="https://anlucas.neocities.org/made_with_windows.gif" alt="Image 15">
+  <img src="https://anlucas.neocities.org/notepad-logo3.gif" alt="Image 16">
+  <img src="https://anlucas.neocities.org/penguin.gif" alt="Image 17">
+  <img src="https://anlucas.neocities.org/spdy-now.gif" alt="Image 18">
+  <img src="https://anlucas.neocities.org/win98_89.gif" alt="Image 19">
+  <img src="https://anlucas.neocities.org/toolzonenow.gif" alt="Image 20">
+  <img src="https://anlucas.neocities.org/ss89a.gif" alt="Image 21">
+  <img src="https://anlucas.neocities.org/nvidia.gif" alt="Image 22">
+  <img src="https://anlucas.neocities.org/icon6.gif" alt="Image 23">
+  <img src="https://anlucas.neocities.org/mms_but1.gif" alt="Image 24">
+</marquee>
+</footer>
+        </div>
+        <!-- THIS IS THE CSS !-->
+        <style>
+            /* user styles */
+
+            /* styles are what change the color and sizes of stuff on your site. */
+
+            /* these are variables that are being used in the code
+    these tended to confuse some people, so I only kept 
+    the images as variables */
+
+            :root {
+                --header-image: url('/newlogo.png');
+                --body-bg-image: url('https://sadhost.neocities.org/images/tiles/goldstars.gif');
+
+                /* colors */
+                --content: #43256E;
+            }
+
+            /* if you have the URL of a font, you can set it below */
+            /* feel free to delete this if it's not your vibe */
+
+            /* this seems like a lot for just one font and I would have to agree 
+    but I wanted to include an example of how to include a custom font.
+    If you download a font file you can upload it onto your Neocities
+    and then link it! Many fonts have separate files for each style
+    (bold, italic, etc. T_T) which is why there are so many!
+    
+    */
+
+            @font-face {
+                font-family: Nunito;
+                src: url('/jten.ttf');
+            }
+
+            @font-face {
+                font-family: Nunito;
+                src: url('https://sadhost.neocities.org/fonts/Nunito-Bold.ttf');
+                font-weight: bold;
+            }
+
+            @font-face {
+                font-family: Nunito;
+                src: url('https://sadhost.neocities.org/fonts/Nunito-Italic.ttf');
+                font-style: italic;
+            }
+
+            @font-face {
+                font-family: Nunito;
+                src: url('https://sadhost.neocities.org/fonts/Nunito-BoldItalic.ttf');
+                font-style: italic;
+                font-weight: bold;
+            }
+
+            body {
+                font-family: 'Nunito', sans-serif;
+                margin: 0;
+                background-color: #3F292B;
+                /* you can delete the line below if you'd prefer to not use an image */
+                background-size: 150px;
+                color: #3F292B;
+                background-image: var(--body-bg-image);
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            /* below this line is CSS for the layout */
+
+            /* this is a CSS comment
+    to uncomment a line of CSS, remove the * and the /
+    before and after the text */
+
+
+            /* the "container" is what wraps your entire website */
+            /* if you want something (like the header) to be Wider than
+    the other elements, you will need to move that div outside
+    of the container */
+            #container {
+                max-width: 900px;
+                /* this is the width of your layout! */
+                /* if you change the above value, scroll to the bottom
+      and change the media query according to the comment! */
+                margin: 0 auto;
+                /* this centers the entire page */
+            }
+
+            /* the area below is for all links on your page
+    EXCEPT for the navigation */
+            #container a {
+                color: #ED64F5;
+                font-weight: bold;
+                /* if you want to remove the underline
+      you can add a line below here that says:
+      text-decoration:none; */
+            }
+
+            #header {
+                width: 100%;
+                background-color: #5e4e8c;
+                /* header color here! */
+                height: 150px;
+                /* this is only for a background image! */
+                /* if you want to put images IN the header, 
+      you can add them directly to the <div id="header"></div> element! */
+                background-image: var(--header-image);
+                background-size: 100%;
+            }
+
+            /* navigation section!! */
+            #navbar {
+                height: 40px;
+                background-color: #13092D;
+                /* navbar color */
+                width: 100%;
+            }
+
+            #navbar ul {
+                display: flex;
+                padding: 0;
+                margin: 0;
+                list-style-type: none;
+                justify-content: space-evenly;
+            }
+
+            #navbar li {
+                padding-top: 10px;
+            }
+
+            /* navigation links*/
+            #navbar li a {
+                color: #ED64F5;
+                /* navbar text color */
+                font-weight: 800;
+                text-decoration: none;
+                /* this removes the underline */
+            }
+
+            /* navigation link when a link is hovered over */
+            #navbar li a:hover {
+                color: #FFC43D;
+                text-decoration: underline;
+            }
+
+            #flex {
+                display: flex;
+            }
+
+            /* this colors BOTH sidebars
+    if you want to style them separately,
+    create styles for #leftSidebar and #rightSidebar */
+            aside {
+                background-color: #1B9AAA;
+                width: 200px;
+                padding: 20px;
+                font-size: smaller;
+                /* this makes the sidebar text slightly smaller */
+            }
+
+
+            /* this is the color of the main content area,
+    between the sidebars! */
+            main {
+                background-color: #F8FFE5;
+                flex: 1;
+                padding: 20px;
+                order: 2;
+            }
+
+            /* what's this "order" stuff about??
+    allow me to explain!
+    if you're using both sidebars, the "order" value
+    tells the CSS the order in which to display them.
+    left sidebar is 1, content is 2, and right sidebar is 3! */
+
+            */ #leftSidebar {
+                order: 1;
+            }
+
+            #rightSidebar {
+                order: 3;
+            }
+
+            footer {
+                background-color: #13092D;
+                /* background color for footer */
+                width: 100%;
+                height: 40px;
+                padding: 10px;
+                text-align: center;
+                /* this centers the footer text */
+            }
+
+            h1,
+            h2,
+            h3 {
+                color: #ED64F5;
+            }
+
+            h1 {
+                font-size: 25px;
+            }
+
+            strong {
+                /* this styles bold text */
+                color: #ED64F5;
+            }
+
+            /* this is just a cool box, it's the darker colored one */
+            .box {
+                background-color: #13092D;
+                border: 1px solid #ED64F5;
+                padding: 10px;
+            }
+
+            /* CSS for extras */
+
+            #topBar {
+                width: 100%;
+                height: 30px;
+                padding: 10px;
+                font-size: smaller;
+                background-color: #13092D;
+            }
+
+
+            /* BELOW THIS POINT IS MEDIA QUERY */
+
+            /* so you wanna change the width of your page? 
+    by default, the container width is 900px.
+    in order to keep things responsive, take your new height,
+    and then subtrack it by 100. use this new number as the 
+    "max-width" value below
+    */
+
+            @media only screen and (max-width: 800px) {
+                #flex {
+                    flex-wrap: wrap;
+                }
+
+                aside {
+                    width: 100%;
+                }
+
+                /* the order of the items is adjusted here for responsiveness!
+      since the sidebars would be too small on a mobile device.
+      feel free to play around with the order!
+      */
+                main {
+                    order: 1;
+                }
+
+                #leftSidebar {
+                    order: 2;
+                }
+
+                #rightSidebar {
+                    order: 3;
+                }
+
+                #navbar ul {
+                    flex-wrap: wrap;
+                }
+            }
+        </style>
+
+    
+  </body>
+</html>
