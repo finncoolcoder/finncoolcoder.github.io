@@ -8,10 +8,10 @@
 
             :root {
                 --header-image: url('/newlogo.png');
-                --body-bg-image: url('https://sadhost.neocities.org/images/tiles/goldstars.gif');
+                --body-bg-image: url('https://sadhost.neocities.org/images/tiles/L4.gif');
 
                 /* colors */
-                --content: #43256E;
+                --content: #86bab1;
             }
 
             /* if you have the URL of a font, you can set it below */
